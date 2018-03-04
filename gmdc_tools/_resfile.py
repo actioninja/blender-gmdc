@@ -31,7 +31,7 @@ from ._gmdc import GeometryDataContainer
 
 
 ########################################
-##  Node classes
+#  Node classes
 ########################################
 
 class ResourceNode(_SGNode):
@@ -49,7 +49,7 @@ class ResourceNode(_SGNode):
             return False
         if not self._read_check_version(f, 0x07): return False
         self.Res_unknown1 = f.read(1)
-        if not self._read_cSGResource(f) or not self._read_cCompositionTreeNode(f): return False
+        if not self._read_csgresource(f) or not self._read_ccompositiontreenode(f): return False
         self.Res_unknown2 = f.read(5)
         return True
 
@@ -57,14 +57,14 @@ class ResourceNode(_SGNode):
         f.write(b'\x0dcResourceNode\x33\xc9\x19\xe5')
         self._write_version(f)
         f.write(self.Res_unknown1)
-        self._write_cSGResource(f)
-        self._write_cCompositionTreeNode(f)
+        self._write_csgresource(f)
+        self._write_ccompositiontreenode(f)
         f.write(self.Res_unknown2)
 
     def __str__(self):
         s = 'cResourceNode\n'
         s += '--Unknown 1: ' + to_hex(self.Res_unknown1) + '\n'
-        s += self._str_cSGResource() + '\n' + self._str_cCompositionTreeNode() + '\n'
+        s += self._str_csgresource() + '\n' + self._str_ccompositiontreenode() + '\n'
         s += '--Unknown 2: ' + to_hex(self.Res_unknown2)
         return s
 
@@ -82,7 +82,7 @@ class ShapeRefNode(_SGNode):
             error('Error! cShapeRefNode header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, (0x14, 0x15)) or not self._read_cRenderableNode(f): return False
+        if not self._read_check_version(f, (0x14, 0x15)) or not self._read_crenderablenode(f): return False
         # linked resource indices (?)
         i = unpack('<l', f.read(4))[0]
         s = f.read(i * 6)
@@ -109,7 +109,7 @@ class ShapeRefNode(_SGNode):
     def write(self, f):
         f.write(b'\x0dcShapeRefNode\x17\x55\x24\x65')
         self._write_version(f)
-        self._write_cRenderableNode(f)
+        self._write_crenderablenode(f)
         f.write(pack('<l', len(self.SR_data1)))
         for t in self.SR_data1:
             f.write(pack('<BBl', *t))
@@ -126,7 +126,7 @@ class ShapeRefNode(_SGNode):
 
     def __str__(self):
         s = 'cShapeRefNode (version: 0x%02X)\n' % self.version
-        s += self._str_cRenderableNode() + '\n'
+        s += self._str_crenderablenode() + '\n'
         s += '--Unknown data (%i):\n' % len(self.SR_data1)
         s += "".join('  %02X %02X ( %i ) - linked resource index (?)\n' % t for t in self.SR_data1)
         s += '--Unknown 1: ' + to_hex(self.SR_unknown1) + '\n'
@@ -147,13 +147,13 @@ class TransformNode(_SGNode):
         self.version = 0x07
 
     def read(self, f, log_level):
-        return self._read_cTransformNode(f)
+        return self._read_ctransformnode(f)
 
     def write(self, f):
-        self._write_cTransformNode(f)
+        self._write_ctransformnode(f)
 
     def __str__(self):
-        return self._str_cTransformNode()
+        return self._str_ctransformnode()
 
 
 class DataListExtension(_SGNode):
@@ -170,7 +170,7 @@ class DataListExtension(_SGNode):
             error('%#x' % f.tell())
             return False
         v = []
-        if not self._read_check_version(f, 0x01) or not self._read_cExtension_h(f) or not self._read_ext_data(f,
+        if not self._read_check_version(f, 0x01) or not self._read_cextension_h(f) or not self._read_ext_data(f,
                                                                                                               v): return False
         assert len(v) == 1
         self.Ext_data = v[0]
@@ -207,7 +207,7 @@ class DataListExtension(_SGNode):
     def write(self, f):
         f.write(b'\x12cDataListExtension\x56\x6d\x83\x6a')
         self._write_version(f)
-        self._write_cExtension_h(f)
+        self._write_cextension_h(f)
         self._write_ext_data(f, self.Ext_data)
 
     @staticmethod
@@ -279,7 +279,7 @@ class BoneDataExtension(_SGNode):
             error('Error! cBoneDataExtension header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, (0x04, 0x05)) or not self._read_cExtension_h(f): return False
+        if not self._read_check_version(f, (0x04, 0x05)) or not self._read_cextension_h(f): return False
         self.B_ext_unknown = f.read(12)
         self.B_ext_float = unpack('<f', f.read(4))[0]
         self.B_ext_quat = unpack('<4f', f.read(16))
@@ -288,7 +288,7 @@ class BoneDataExtension(_SGNode):
     def write(self, f):
         f.write(b'\x12cBoneDataExtension\xc5\x5b\x07\xe9')
         self._write_version(f)
-        self._write_cExtension_h(f)
+        self._write_cextension_h(f)
         f.write(self.B_ext_unknown)
         f.write(pack('<f', self.B_ext_float))
         f.write(pack('<4f', *self.B_ext_quat))
@@ -314,7 +314,7 @@ class LightRefNode(_SGNode):
             error('Error! cLightRefNode header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, 0x0a) or not self._read_cRenderableNode(f): return False
+        if not self._read_check_version(f, 0x0a) or not self._read_crenderablenode(f): return False
         self.L_index = unpack('<BBl', f.read(6))
         self.L_unknown = f.read(2)
         return True
@@ -322,13 +322,13 @@ class LightRefNode(_SGNode):
     def write(self, f):
         f.write(b'\x0dcLightRefNode\x18\x20\x3d\x25')
         self._write_version(f)
-        self._write_cRenderableNode(f)
+        self._write_crenderablenode(f)
         f.write(pack('<BBl', *self.L_index))
         f.write(self.L_unknown)
 
     def __str__(self):
         s = 'cLightRefNode\n'
-        s += self._str_cRenderableNode() + '\n'
+        s += self._str_crenderablenode() + '\n'
         s += '--Linked resource index (?): %02X %02X ( %i )\n' % self.L_index
         s += '--Unknown: ' + to_hex(self.L_unknown)
         return s
@@ -347,14 +347,14 @@ class ViewerRefNode(_SGNode):
             error('Error! cViewerRefNodeBase header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        return self._read_cRenderableNode(f)
+        return self._read_crenderablenode(f)
 
     def _write_cViewerRefNodeBase(self, f):
         f.write(b'\x12cViewerRefNodeBase\x00\x00\x00\x00\x05\x00\x00\x00')
-        self._write_cRenderableNode(f)
+        self._write_crenderablenode(f)
 
     def _str_cViewerRefNodeBase(self):
-        return self._str_cRenderableNode()
+        return self._str_crenderablenode()
 
     def read(self, f, log_level):
         s = f.read(19)
@@ -430,7 +430,7 @@ class GeometryNode(_SGNode):
             error('Error! cGeometryNode header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, 0x0c) or not self._read_cObjectGraphNode(f) or not self._read_cSGResource(
+        if not self._read_check_version(f, 0x0c) or not self._read_cobjectgraphnode(f) or not self._read_csgresource(
             f): return False
         self.G_unknown = f.read(7)
         return True
@@ -438,13 +438,13 @@ class GeometryNode(_SGNode):
     def write(self, f):
         f.write(b'\x0dcGeometryNode\x8c\x83\xa3\x7b')
         self._write_version(f)
-        self._write_cObjectGraphNode(f)
-        self._write_cSGResource(f)
+        self._write_cobjectgraphnode(f)
+        self._write_csgresource(f)
         f.write(self.G_unknown)
 
     def __str__(self):
         s = 'cGeometryNode\n'
-        s += self._str_cObjectGraphNode() + '\n' + self._str_cSGResource() + '\n'
+        s += self._str_cobjectgraphnode() + '\n' + self._str_csgresource() + '\n'
         s += '--Unknown: ' + to_hex(self.G_unknown)
         return s
 
@@ -462,7 +462,7 @@ class MaterialDefinition(_SGNode):
             error('Error! cGeometryNode header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, 0x0b) or not self._read_cSGResource(f): return False
+        if not self._read_check_version(f, 0x0b) or not self._read_csgresource(f): return False
         self.Mat_name = read_str(f)
         self.Mat_type = read_str(f)
         i = unpack('<l', f.read(4))[0]
@@ -482,7 +482,7 @@ class MaterialDefinition(_SGNode):
     def write(self, f):
         f.write(b'\x13cMaterialDefinition\x78\x69\x59\x49')
         self._write_version(f)
-        self._write_cSGResource(f)
+        self._write_csgresource(f)
         write_str(f, self.Mat_name)
         write_str(f, self.Mat_type)
         f.write(pack('<l', len(self.Mat_properties)))
@@ -495,7 +495,7 @@ class MaterialDefinition(_SGNode):
 
     def __str__(self):
         s = 'cMaterialDefinition\n'
-        s += self._str_cSGResource() + '\n'
+        s += self._str_csgresource() + '\n'
         s += '--Name: "%s"\n' % self.Mat_name
         s += '--Type: "%s"\n' % self.Mat_type
         s += '--Properties (%i):\n'

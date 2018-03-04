@@ -25,7 +25,7 @@ __all__ = ['Vector', 'Matrix', 'Quaternion', 'Transform', 'build_transform_tree'
 
 
 ########################################
-##  Classes
+#  Classes
 ########################################
 
 class Vector(object):
@@ -65,7 +65,7 @@ class Vector(object):
 
 class Matrix(object):
     def __init__(self,
-                 ##---------- X    Y    Z
+                 # X    Y    Z
                  row1=(1.0, 0.0, 0.0),
                  row2=(0.0, 1.0, 0.0),
                  row3=(0.0, 0.0, 1.0)):

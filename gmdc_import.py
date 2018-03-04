@@ -63,11 +63,11 @@ def create_objects(geometry, transform_tree, settings):
                 uv1, uv2, uv3 = t
                 # Direct3D -> OpenGL
                 u, v = uv1
-                uv1 = BlenderVector(u, 1 - v)
+                uv1 = BlenderVector((u, 1 - v))
                 u, v = uv2
-                uv2 = BlenderVector(u, 1 - v)
+                uv2 = BlenderVector((u, 1 - v))
                 u, v = uv3
-                uv3 = BlenderVector(u, 1 - v)
+                uv3 = BlenderVector((u, 1 - v))
                 # assign
                 f.uv = (uv1, uv2, uv3)
 

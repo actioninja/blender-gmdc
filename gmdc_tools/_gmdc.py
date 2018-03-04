@@ -84,20 +84,20 @@ class GeometryDataContainer(_SGNode):
             error('Error! cGeometryDataContainer header:', to_hex(s))
             error('%#x' % f.tell())
             return False
-        if not self._read_check_version(f, 0x04) or not self._read_cSGResource(f): return False
+        if not self._read_check_version(f, 0x04) or not self._read_csgresource(f): return False
         self.geometry = _load_geometry_data(f, log_level)
         return bool(self.geometry)
 
     def write(self, f):
         f.write(b'\x16cGeometryDataContainer\x87\x86\x4F\xAC')
         self._write_version(f)
-        self._write_cSGResource(f)
+        self._write_csgresource(f)
         _write_geometry_data(f, self.geometry)
 
     def __str__(self):
         s = 'cGeometryDataContainer'
         g = self.geometry
-        s += '\n' + self._str_cSGResource() + '\n'
+        s += '\n' + self._str_csgresource() + '\n'
         s += '--Data groups (%i):\n' % len(g.data_groups)
         for i, group in enumerate(g.data_groups):
             v = [group.vertices, group.normals, group.tex_coords, group.bones, group.weights, group.tangents,
