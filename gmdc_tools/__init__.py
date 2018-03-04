@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 # Copyright (C) 2016  DjAlex88 (https://github.com/djalex88/)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,9 +18,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
-#-------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------
 
-from ._common  import log, error, set_log_file, close_log_file, chunk, to_hex, print_last_exception
-from ._gmdc    import DataGroup, IndexGroup, GeometryData, create_gmdc_file
+from ._common import log, error, set_log_file, close_log_file, chunk, to_hex, print_last_exception
+from ._gmdc import DataGroup, IndexGroup, GeometryData, create_gmdc_file
 from ._resfile import load_resource
-from ._tree    import Vector, Matrix, Quaternion, Transform, build_transform_tree
+from ._tree import Vector, Matrix, Quaternion, Transform, build_transform_tree
