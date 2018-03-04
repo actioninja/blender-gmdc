@@ -33,9 +33,8 @@ from struct import pack
 from gmdc_tools import *
 from itertools import count, repeat
 
-import bpy, Blender
-from Blender import Draw
-from Blender.Mathutils import Vector as BlenderVector
+import bpy
+from mathutils import Vector as BlenderVector
 
 
 ########################################
@@ -106,8 +105,8 @@ def prepare_geometry(settings):
         # make current object active and activate basic shape key
         scene.objects.active = obj
         obj.activeShape = 1
-        Blender.Window.EditMode(1)
-        Blender.Window.EditMode(0)
+        bpy.app.Window.EditMode(1)
+        bpy.app.Window.EditMode(0)
 
         mesh = obj.getData(mesh=True)
 
@@ -243,8 +242,8 @@ def prepare_geometry(settings):
 
                 # activate morph
                 obj.activeShape = k
-                Blender.Window.EditMode(1)
-                Blender.Window.EditMode(0)
+                bpy.app.Window.EditMode(1)
+                bpy.app.Window.EditMode(0)
                 key_block_verts = key_block.getData()
 
                 # add difference arrays
@@ -273,11 +272,11 @@ def prepare_geometry(settings):
 
             k = len(all_vertices)
 
-            keys = [[] for i in xrange(k)]
+            keys = [[] for i in range(k)]
 
             if morphing == 2:  # vertices and normals
-                v = [[] for i in xrange(k)]
-                w = [[] for i in xrange(k)]
+                v = [[] for i in range(k)]
+                w = [[] for i in range(k)]
                 for i, dv, dn in zip(mesh_morphs, dVerts, dNorms):  # loop through all difference arrays (morphs)
                     for x, y, k, a, b in zip(dv, dn, keys, v, w):
                         if x != (0.0, 0.0, 0.0) or y != (0.0, 0.0, 0.0):  # vertex affected
@@ -295,7 +294,7 @@ def prepare_geometry(settings):
                 w = None
 
             else:  # vertices only
-                v = [[] for i in xrange(k)]
+                v = [[] for i in range(k)]
                 for i, dv in zip(mesh_morphs, dVerts):
                     for x, k, a in zip(dv, keys, v):
                         if x != (0.0, 0.0, 0.0):
@@ -484,7 +483,7 @@ def prepare_geometry(settings):
 
     if settings['export_bmesh']:
 
-        bmesh_obj = Blender.Object.Get(settings['bmesh_name'])
+        bmesh_obj = bpy.app.Object.Get(settings['bmesh_name'])
         mesh = bmesh_obj.getData(mesh=True)
 
         obj_loc = bmesh_obj.matrix[3].xyz
@@ -507,7 +506,7 @@ def prepare_geometry(settings):
                     return False
                 v_groups[idx] = name
 
-            for idx in xrange(max(v_groups) + 1):
+            for idx in range(max(v_groups) + 1):
 
                 if idx in v_groups:
 
@@ -583,7 +582,7 @@ def prepare_geometry(settings):
 # this function does basic checks and initiates the exporter
 
 def begin_export():
-    Blender.Window.EditMode(0)
+    bpy.app.Window.EditMode(0)
 
     settings = {
         'SGResource': str_resource_name.val.strip(),
@@ -673,20 +672,20 @@ def begin_export():
         log('Finished!')
 
         # exit prompt
-        if display_menu("Export complete!", ['Quit']) == 0: Draw.Exit()
+        if display_menu("Export complete!", ['Quit']) == 0: bpy.app.Exit()
 
     finally:
         close_log_file()
 
 
 ########################################
-##  GUI
+#  GUI
 ########################################
 
 def display_menu(caption, items, choice_required=False):
     b = True
     while b:
-        choice = Draw.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
+        choice = bpy.app.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
         b = choice_required and choice < 0
     return choice
 
@@ -711,18 +710,18 @@ def draw_gui():
     s = "GMDC Exporter (TS2)"
     Blender.BGL.glColor3f(0.8, 0.8, 0.8)
     Blender.BGL.glRecti(10, pos_y, 430, pos_y + 30)
-    Draw.Label(s, 20, pos_y, 400, 30)
+    bpy.app.Label(s, 20, pos_y, 400, 30)
 
     pos_y -= 30
 
     # GMDC file selector
 
-    Draw.Label("GMDC file (output)", 20, pos_y, 200, 20)
+    bpy.app.Label("GMDC file (output)", 20, pos_y, 200, 20)
     pos_y -= 20
-    Draw.BeginAlign()
-    str_gmdc_filename = Draw.String("", 0x10, 20, pos_y, 300, 20, str_gmdc_filename.val, MAX_PATH, "Path to GMDC file")
-    Draw.PushButton("Select file", 0x11, 320, pos_y, 100, 20, "Open file browser")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    str_gmdc_filename = bpy.app.String("", 0x10, 20, pos_y, 300, 20, str_gmdc_filename.val, MAX_PATH, "Path to GMDC file")
+    bpy.app.PushButton("Select file", 0x11, 320, pos_y, 100, 20, "Open file browser")
+    bpy.app.EndAlign()
 
     pos_y -= 35
 
@@ -731,58 +730,58 @@ def draw_gui():
     Blender.BGL.glColor3f(0.7, 0.7, 0.7)
     Blender.BGL.glRecti(20, pos_y - 60, 420, pos_y + 20)
 
-    Draw.Label("SGResource name (optional)", 25, pos_y, 400, 20);
+    bpy.app.Label("SGResource name (optional)", 25, pos_y, 400, 20);
     pos_y -= 20
-    Draw.Label("If not provided then GMDC filename is used", 25, pos_y, 400, 20);
+    bpy.app.Label("If not provided then GMDC filename is used", 25, pos_y, 400, 20);
     pos_y -= 30
-    Draw.BeginAlign()
-    str_resource_name = Draw.String("", 0x50, 70, pos_y, 180, 20, str_resource_name.val, 50,
+    bpy.app.BeginAlign()
+    str_resource_name = bpy.app.String("", 0x50, 70, pos_y, 180, 20, str_resource_name.val, 50,
                                     "SGResource name of this geometry")
-    btn_name_suffix = Draw.Toggle("_tslocator_gmdc", 0x51, 250, pos_y, 120, 20, btn_name_suffix.val,
+    btn_name_suffix = bpy.app.Toggle("_tslocator_gmdc", 0x51, 250, pos_y, 120, 20, btn_name_suffix.val,
                                   "Add default suffix")
-    Draw.EndAlign()
+    bpy.app.EndAlign()
 
     pos_y -= 45
 
     # options
 
-    Draw.BeginAlign()
-    btn_export_rigging = Draw.Toggle("Rigging", 0x31, 20, pos_y, 100, 20, btn_export_rigging.val,
+    bpy.app.BeginAlign()
+    btn_export_rigging = bpy.app.Toggle("Rigging", 0x31, 20, pos_y, 100, 20, btn_export_rigging.val,
                                      "Export rigging data (bone indices, weights)")
-    btn_export_tangents = Draw.Toggle("Tangents", 0x32, 120, pos_y, 100, 20, btn_export_tangents.val,
+    btn_export_tangents = bpy.app.Toggle("Tangents", 0x32, 120, pos_y, 100, 20, btn_export_tangents.val,
                                       "Export tangents (required for bump mapping)")
-    btn_export_bmesh = Draw.Toggle("Bound. mesh", 0x33, 220, pos_y, 100, 20, btn_export_bmesh.val,
+    btn_export_bmesh = bpy.app.Toggle("Bound. mesh", 0x33, 220, pos_y, 100, 20, btn_export_bmesh.val,
                                    "Export bounding geometry")
-    btn_save_log = Draw.Toggle("Save log", 0x34, 320, pos_y, 100, 20, btn_save_log.val,
+    btn_save_log = bpy.app.Toggle("Save log", 0x34, 320, pos_y, 100, 20, btn_save_log.val,
                                "Write script's log data into file *.export_log.txt")
-    Draw.EndAlign()
+    bpy.app.EndAlign()
 
     pos_y -= 30
 
-    Draw.BeginAlign()
-    menu_export_morphs = Draw.Menu(
+    bpy.app.BeginAlign()
+    menu_export_morphs = bpy.app.Menu(
         "Export morphs %t|Do not export morphs %x0|Diff. in v.coords only %x1|Diff. in v.coords and normals %x2", 0x35,
         20, pos_y, 200, 20, menu_export_morphs.val)
-    btn_use_obj_props = Draw.Toggle("Use object properties", 0x36, 220, pos_y, 200, 20, btn_use_obj_props.val,
+    btn_use_obj_props = bpy.app.Toggle("Use object properties", 0x36, 220, pos_y, 200, 20, btn_use_obj_props.val,
                                     "Properties can be assigned in logic panel")
-    Draw.EndAlign()
+    bpy.app.EndAlign()
 
     pos_y -= 30
 
     # bounding mesh name
 
-    Draw.Label("Bounding mesh:", 20, pos_y, 100, 20)
-    str_bmesh_name = Draw.String("", 0x40, 120, pos_y, 200, 20, str_bmesh_name.val, 50,
+    bpy.app.Label("Bounding mesh:", 20, pos_y, 100, 20)
+    str_bmesh_name = bpy.app.String("", 0x40, 120, pos_y, 200, 20, str_bmesh_name.val, 50,
                                  "Name of mesh object that will be exported as bounding mesh")
 
     pos_y -= 50
 
     # buttons
 
-    Draw.BeginAlign()
-    Draw.PushButton("Export", 1, 120, pos_y, 100, 30, "Export geometry (Ctrl + Enter)")
-    Draw.PushButton("Exit", 0, 220, pos_y, 100, 30, "Terminate the script (Esc)")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    bpy.app.PushButton("Export", 1, 120, pos_y, 100, 30, "Export geometry (Ctrl + Enter)")
+    bpy.app.PushButton("Exit", 0, 220, pos_y, 100, 30, "Terminate the script (Esc)")
+    bpy.app.EndAlign()
 
 
 # ---------------------------------------
@@ -799,13 +798,13 @@ def set_gmdc_filename(filename):
 
 def event_handler(evt, val):
     global l_ctrl_key_pressed, r_ctrl_key_pressed
-    if evt == Draw.ESCKEY and val:
-        Draw.Exit()
-    elif evt == Draw.LEFTCTRLKEY:
+    if evt == bpy.app.ESCKEY and val:
+        bpy.app.Exit()
+    elif evt == bpy.app.LEFTCTRLKEY:
         l_ctrl_key_pressed = val
-    elif evt == Draw.RIGHTCTRLKEY:
+    elif evt == bpy.app.RIGHTCTRLKEY:
         r_ctrl_key_pressed = val
-    elif evt == Draw.RETKEY and val and (l_ctrl_key_pressed or r_ctrl_key_pressed):
+    elif evt == bpy.app.RETKEY and val and (l_ctrl_key_pressed or r_ctrl_key_pressed):
         begin_export()
         l_ctrl_key_pressed = 0
         r_ctrl_key_pressed = 0
@@ -813,25 +812,25 @@ def event_handler(evt, val):
 
 def button_events(evt):
     if evt == 0:
-        Draw.Exit()
+        bpy.app.Exit()
     elif evt == 1:
         begin_export()
     elif evt == 0x11:
-        Blender.Window.FileSelector(set_gmdc_filename, 'Select', Blender.sys.makename(ext='.gmdc'))
+        bpy.app.Window.FileSelector(set_gmdc_filename, 'Select', bpy.sys.makename(ext='.gmdc'))
 
 
 # -------------------------------------------------------------------------------
 # set default values for GUI elements and run event loop
 
-str_gmdc_filename = Draw.Create("")
-str_resource_name = Draw.Create("")
-btn_name_suffix = Draw.Create(1)
-btn_export_rigging = Draw.Create(0)
-btn_export_tangents = Draw.Create(0)
-btn_export_bmesh = Draw.Create(0)
-btn_save_log = Draw.Create(0)
-btn_use_obj_props = Draw.Create(0)
-menu_export_morphs = Draw.Create(0)
-str_bmesh_name = Draw.Create("b_mesh")
+str_gmdc_filename = bpy.app.Create("")
+str_resource_name = bpy.app.Create("")
+btn_name_suffix = bpy.app.Create(1)
+btn_export_rigging = bpy.app.Create(0)
+btn_export_tangents = bpy.app.Create(0)
+btn_export_bmesh = bpy.app.Create(0)
+btn_save_log = bpy.app.Create(0)
+btn_use_obj_props = bpy.app.Create(0)
+menu_export_morphs = bpy.app.Create(0)
+str_bmesh_name = bpy.app.Create("b_mesh")
 
-Draw.Register(draw_gui, event_handler, button_events)
+bpy.app.Register(draw_gui, event_handler, button_events)
