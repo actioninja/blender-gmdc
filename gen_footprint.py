@@ -35,9 +35,9 @@ from itertools import product
 from gmdc_tools import log, error, set_log_file, close_log_file, print_last_exception, load_resource
 from gmdc_tools._resfile import DataListExtension, str_footprint
 
-import bpy, Blender
-from Blender import Draw
-from Blender.Mathutils import Vector, Intersect
+import bpy
+from mathutils import Vector
+import mathutils.geometry as Geometry
 
 # ---------------------------------------
 
@@ -70,7 +70,7 @@ def generate_footprint():
 
         mesh = obj.getData(mesh=True)
 
-        obj_loc = obj.matrix[3].xyz + Vector(0.5, 0.5, 0)
+        obj_loc = obj.matrix[3].xyz + Vector((0.5, 0.5, 0))
 
         name = obj.name.split('.')
         name = name[1] if len(name) > 1 else "0"
@@ -80,38 +80,38 @@ def generate_footprint():
             x = x0 + 0.0625 * (i + 0.5)
             y = y0 + 0.0625 * (j + 0.5)
 
-            ray, orig = Vector(0, 0, 1), Vector(x, y, 0)
+            ray, orig = Vector((0, 0, 1)), Vector((x, y, 0))
 
             for face in mesh.faces:
                 verts = [v.co + obj_loc for v in face.verts]
 
-                if Intersect(verts[0], verts[1], verts[2], ray, orig, 1) or \
-                        (len(face.verts) == 4 and \
-                         Intersect(verts[0], verts[2], verts[3], ray, orig, 1)): return True
+                if Geometry.intersect(verts[0], verts[1], verts[2], ray, orig, 1) or \
+                    (len(face.verts) == 4 and
+                     Geometry.ntersect(verts[0], verts[2], verts[3], ray, orig, 1)): return True
 
             return False
 
         # bounding box
         box = obj.getBoundBox(1)
-        X, Y, Z = zip(*map(tuple, box))
-        Z = None  # not used
+        x, y, z = zip(*map(tuple, box))
+        z = None  # not used
 
-        minx, maxx = int(floor(min(X) + 0.5)), int(ceil(max(X) + 0.5))
-        miny, maxy = int(floor(min(Y) + 0.5)), int(ceil(max(Y) + 0.5))
+        minx, maxx = int(floor(min(x) + 0.5)), int(ceil(max(x) + 0.5))
+        miny, maxy = int(floor(min(y) + 0.5)), int(ceil(max(y) + 0.5))
 
         data = [(0x02, 'minx', minx), (0x02, 'maxx', maxx - 1), (0x02, 'miny', miny), (0x02, 'maxy', maxy - 1)]
 
         log('--Name: "%s"' % name)
         log('--Size: %i x %i' % (maxx - minx, maxy - miny))
 
-        for x, y in product(xrange(minx, maxx), xrange(miny, maxy)):
+        for x, y in product(range(minx, maxx), range(miny, maxy)):
 
             key = '(%i,%i)' % (x, y)
 
             s = ''
 
-            for j in xrange(16):
-                a = sum(2 ** i for i in xrange(16) if test_point(x, y, i, j))
+            for j in range(16):
+                a = sum(2 ** i for i in range(16) if test_point(x, y, i, j))
                 s += pack('<H', a)
             data.append((0x09, key, s))
 
@@ -119,7 +119,7 @@ def generate_footprint():
 
     # <- objects
 
-    return (0x07, 'footprint', footprint)
+    return 0x07, 'footprint', footprint
 
 
 # ---------------------------------------
@@ -127,14 +127,13 @@ def generate_footprint():
 def display_menu(caption, items, choice_required=False):
     b = True
     while b:
-        choice = Draw.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
+        choice = bpy.app.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
         b = choice_required and choice < 0
     return choice
 
 
 def update_cres(cres_filename):
-    Blender.Window.EditMode(0)
-
+    bpy.app.Window.EditMode(0)
     _save_log = display_menu('Save log?', ['Yes', 'No'], True) == 0
 
     # create log file (if needed)
@@ -224,4 +223,4 @@ if not filter(lambda obj: obj.type == 'Mesh' and obj.name.lower().startswith('fo
     display_menu('Error!', ['No mesh objects whose names begin with "footprint".'])
 
 else:
-    Blender.Window.FileSelector(update_cres, 'Update CRES')
+    bpy.app.Window.FileSelector(update_cres, 'Update CRES')
