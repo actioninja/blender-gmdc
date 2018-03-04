@@ -31,13 +31,12 @@ Tooltip: 'Import TS2 GMDC file' """
 from gmdc_tools import *
 from itertools import chain, count
 
-import bpy, Blender
-from Blender import Draw
-from Blender.Mathutils import Vector as BlenderVector
+import bpy
+from mathutils import Vector as BlenderVector
 
 
 ########################################
-##  Importer
+#  Importer
 ########################################
 
 def create_objects(geometry, transform_tree, settings):
@@ -48,7 +47,7 @@ def create_objects(geometry, transform_tree, settings):
 
         # create mesh
         #
-        mesh = Blender.Mesh.New(name)
+        mesh = bpy.Mesh.New(name)
 
         mesh.verts.extend(V)
         mesh.faces.extend(I, ignoreDups=True, smooth=True)
@@ -63,11 +62,11 @@ def create_objects(geometry, transform_tree, settings):
             for f, t in zip(mesh.faces, T):
                 uv1, uv2, uv3 = t
                 # Direct3D -> OpenGL
-                u, v = uv1;
+                u, v = uv1
                 uv1 = BlenderVector(u, 1 - v)
-                u, v = uv2;
+                u, v = uv2
                 uv2 = BlenderVector(u, 1 - v)
-                u, v = uv3;
+                u, v = uv3
                 uv3 = BlenderVector(u, 1 - v)
                 # assign
                 f.uv = (uv1, uv2, uv3)
@@ -79,7 +78,7 @@ def create_objects(geometry, transform_tree, settings):
         for node in transform_nodes:
             if id(node) in node_ids:
 
-                _bone = Blender.Armature.Editbone()
+                _bone = bpy.types.Armature.Editbone()
                 _bone.head = BlenderVector(node.abs_transform.loc.to_tuple())
 
                 # compute tail pos as arithmetic mean
@@ -100,11 +99,10 @@ def create_objects(geometry, transform_tree, settings):
                 armature.bones[name] = _bone
                 add_bones_to_armature(node.child_nodes, _bone)
 
-    ##
-    ## armature, node_ids and bone_set are defined at the bottom
+    # armature, node_ids and bone_set are defined at the bottom
 
     def make_unique_bone_name(name, idx, collection):
-        idx = '#%i' % idx if idx != None else ''
+        idx = '#%i' % idx if idx is not None else ''
         s = name[:30 - len(idx)] + idx  # max - 31 characters (?)
         i = 1
         while s in collection:
@@ -118,9 +116,7 @@ def create_objects(geometry, transform_tree, settings):
     # get active scene
     scene = bpy.data.scenes.active
 
-    #
     # add mesh objects (main geometry)
-    #
 
     mesh_objects = []
 
@@ -131,48 +127,49 @@ def create_objects(geometry, transform_tree, settings):
         data_group = geometry.data_groups[group.data_group_index]
 
         # define index mapping
-        S = {}  # { old_index -> new_index }
-        for i, x in enumerate(sorted(set(chain(*group.indices)))): S[x] = i
+        s = {}  # old_index -> new_index
+        for i, x in enumerate(sorted(set(chain(*group.indices)))): s[x] = i
 
         # map indices
-        I = [(S[i], S[j], S[k]) for i, j, k in group.indices]
+        i = [(s[i], s[j], s[k]) for i, j, k in group.indices]
 
         # filtering function
-        __fv = lambda X: [x for i, x in enumerate(X) if i in S]
+        __fv = lambda x: [x for i, x in enumerate(x) if i in s]
 
-        V = __fv(data_group.vertices)
+        v = __fv(data_group.vertices)
 
         # texture coords
         if data_group.tex_coords:
-            T = __fv(data_group.tex_coords)
-            T = [(T[i], T[j], T[k]) for i, j, k in I]
+            t = __fv(data_group.tex_coords)
+            t = [(t[i], t[j], t[k]) for i, j, k in i]
         else:
-            T = group.tex_coords and group.tex_coords[:]  # copy
+            t = group.tex_coords and group.tex_coords[:]  # copy
 
         # also, Blender does not like triangles with zero-index vertex on 3rd position
         # as well as "triangles" with less than 3 different indices:
         #   https://www.blender.org/api/249PythonDoc/Mesh.MFaceSeq-class.html#extend
         #
         w = []
-        for i, t in enumerate(I):
+        for i, t in enumerate(i):
             if 0 == t[2]:
-                I[i] = (t[2], t[0], t[1])
-                log('--Triangle # %i reordered:' % i, t, '->', I[i])
-                if T:
-                    uv1, uv2, uv3 = T[i]
-                    T[i] = (uv3, uv1, uv2)
+                i[i] = (t[2], t[0], t[1])
+                log('--Triangle # %i reordered:' % i, t, '->', i[i])
+                if t:
+                    uv1, uv2, uv3 = t[i]
+                    t[i] = (uv3, uv1, uv2)
             if len(set(t)) < 3:
                 w.append(i)
                 log('--Triangle # %i' % i, t, 'removed')
         for i in reversed(w):
-            del I[i]
-            if T: del T[i]
+            del i[i]
+            if t:
+                del t[i]
         w = None
 
-        log('--Creating mesh object (vertices: %i, triangles: %i)...' % (len(V), len(I)))
+        log('--Creating mesh object (vertices: %i, triangles: %i)...' % (len(v), len(i)))
 
         # create mesh and add it to the scene
-        mesh = create_mesh(group.name, V, I, T)
+        mesh = create_mesh(group.name, v, i, t)
         obj = scene.objects.new(mesh)
         obj.name = group.name  # max - 21 characters
 
@@ -202,7 +199,7 @@ def create_objects(geometry, transform_tree, settings):
                 dd[idx] = name = make_unique_bone_name(name, idx, dd.values())
                 # add vertex group
                 mesh.addVertGroup(name)
-            v_group_names = [dd.get(j) for j in xrange(max(dd) + 1)]
+            v_group_names = [dd.get(j) for j in range(max(dd) + 1)]
 
             # assign vertices
             for i, b, w in zip(count(), B, W):
@@ -264,11 +261,11 @@ def create_objects(geometry, transform_tree, settings):
         if geometry.static_bmesh:
             log('Creating static bounding mesh...')
 
-            V, I = geometry.static_bmesh
+            v, i = geometry.static_bmesh
 
-            mesh = Blender.Mesh.New('b_mesh')
-            mesh.verts.extend(V)
-            mesh.faces.extend(I)
+            mesh = bpy.types.Mesh.New('b_mesh')
+            mesh.verts.extend(v)
+            mesh.faces.extend(i)
 
             obj = scene.objects.new(mesh)
             obj.name = 'b_mesh'
@@ -277,7 +274,7 @@ def create_objects(geometry, transform_tree, settings):
 
             log('Creating dynamic bounding mesh...')
 
-            mesh = Blender.Mesh.New('b_mesh')
+            mesh = bpy.types.Mesh.New('b_mesh')
             obj = scene.objects.new(mesh)
             obj.name = 'b_mesh'
 
@@ -285,25 +282,25 @@ def create_objects(geometry, transform_tree, settings):
 
             for idx, part in enumerate(geometry.dynamic_bmesh):
                 if part:
-                    V, I = part
-                    S = {}  # { old_index -> new_index }
+                    v, i = part
+                    s = {}  # { old_index -> new_index }
                     j = len(mesh.verts)
-                    for i, x in enumerate(sorted(set(chain(*I)))): S[x] = i + j
+                    for i, x in enumerate(sorted(set(chain(*i)))): s[x] = i + j
 
                     rot, loc = geometry.inverse_transforms[idx]
                     t = Transform(loc, rot).get_inverse()
 
-                    V = [t.transformPoint(Vector(*x)).to_tuple() for i, x in enumerate(V) if i in S]
-                    I = [(S[i], S[j], S[k]) for i, j, k in I]
+                    v = [t.transformPoint(Vector(*x)).to_tuple() for i, x in enumerate(v) if i in s]
+                    i = [(s[i], s[j], s[k]) for i, j, k in i]
 
-                    mesh.verts.extend(V)
-                    mesh.faces.extend(I)
+                    mesh.verts.extend(v)
+                    mesh.faces.extend(i)
 
                     name = transform_tree and transform_tree.get_node(idx).name or 'bone'
                     name = make_unique_bone_name(name, idx, v_group_names)
                     v_group_names.add(name)
                     mesh.addVertGroup(name)
-                    mesh.assignVertsToGroup(name, S.values(), 1.0, 1)
+                    mesh.assignVertsToGroup(name, s.values(), 1.0, 1)
 
             mesh.calcNormals()
 
@@ -359,13 +356,13 @@ def create_objects(geometry, transform_tree, settings):
             log('Creating armature...')
             log('--Number of transform nodes (%i)' % len(node_ids))
 
-            armature = Blender.Armature.New()
+            armature = bpy.types.Armature.New()
             armature.envelopes = False
             armature.vertexGroups = True
-            armature.drawType = Blender.Armature.STICK
+            armature.drawType = bpy.types.Armature.STICK
 
             arm_obj = scene.objects.new(armature)  # create armature object
-            arm_obj.drawMode |= Blender.Object.DrawModes.XRAY
+            arm_obj.drawMode |= bpy.types.Object.bpy.appModes.XRAY
 
             # add bones
             armature.makeEditable()
@@ -377,10 +374,10 @@ def create_objects(geometry, transform_tree, settings):
             # assign armature modifier
             #
             for obj in mesh_objects:
-                modifier = obj.modifiers.append(Blender.Modifier.Types.ARMATURE)
-                modifier[Blender.Modifier.Settings.VGROUPS] = True  # use vertex groups
-                modifier[Blender.Modifier.Settings.ENVELOPES] = False  # not envelopes
-                modifier[Blender.Modifier.Settings.OBJECT] = arm_obj
+                modifier = obj.modifiers.append(bpy.types.Modifier.Types.ARMATURE)
+                modifier[bpy.types.Modifier.Settings.VGROUPS] = True  # use vertex groups
+                modifier[bpy.types.Modifier.Settings.ENVELOPES] = False  # not envelopes
+                modifier[bpy.typebpy.typesModifier.Settings.OBJECT] = arm_obj
 
     scene.update()
 
@@ -486,23 +483,23 @@ def begin_import():
         # Ok
         log('Finished!')
 
-        Blender.Redraw()
+        bpy.app.Redraw()
 
         # exit prompt
-        if display_menu("Import complete!", ['Quit']) == 0: Draw.Exit()
+        if display_menu("Import complete!", ['Quit']) == 0: bpy.app.Exit()
 
     finally:
         close_log_file()
 
 
 ########################################
-##  GUI
+#  GUI
 ########################################
 
 def display_menu(caption, items, choice_required=False):
     b = True
     while b:
-        choice = Draw.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
+        choice = bpy.app.PupMenu('%s%%t|' % caption + "|".join('%s%%x%i' % (s, i) for i, s in enumerate(items)), 0x100)
         b = choice_required and choice < 0
     return choice
 
@@ -515,64 +512,65 @@ def draw_gui():
 
     # frame
 
-    Blender.BGL.glColor3f(0.75, 0.75, 0.75)
-    Blender.BGL.glRecti(10, 10, 430, pos_y)
+    bpy.app.BGL.glColor3f(0.75, 0.75, 0.75)
+    bpy.app.BGL.glRecti(10, 10, 430, pos_y)
 
     pos_y -= 30
 
     # plugin's header
 
     s = "GMDC Importer (TS2)"
-    Blender.BGL.glColor3f(0.8, 0.8, 0.8)
-    Blender.BGL.glRecti(10, pos_y, 430, pos_y + 30)
-    Draw.Label(s, 20, pos_y, 400, 30)
+    bpy.app.BGL.glColor3f(0.8, 0.8, 0.8)
+    bpy.app.BGL.glRecti(10, pos_y, 430, pos_y + 30)
+    bpy.app.Label(s, 20, pos_y, 400, 30)
 
     pos_y -= 30
 
     # GMDC file selector
 
-    Draw.Label("GMDC file", 20, pos_y, 200, 20)
+    bpy.app.Label("GMDC file", 20, pos_y, 200, 20)
     pos_y -= 20
-    Draw.BeginAlign()
-    str_gmdc_filename = Draw.String("", 0x10, 20, pos_y, 300, 20, str_gmdc_filename.val, MAX_PATH, "Path to GMDC file")
-    Draw.PushButton("Select file", 0x11, 320, pos_y, 100, 20, "Open file browser")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    str_gmdc_filename = bpy.app.String("", 0x10, 20, pos_y, 300, 20, str_gmdc_filename.val, MAX_PATH,
+                                       "Path to GMDC file")
+    bpy.app.PushButton("Select file", 0x11, 320, pos_y, 100, 20, "Open file browser")
+    bpy.app.EndAlign()
 
     pos_y -= 30
 
     # resource node file selector
 
-    Draw.Label("Resource node file (optional)", 20, pos_y, 200, 20)
+    bpy.app.Label("Resource node file (optional)", 20, pos_y, 200, 20)
     pos_y -= 20
-    Draw.BeginAlign()
-    str_cres_filename = Draw.String("", 0x20, 20, pos_y, 300, 20, str_cres_filename.val, MAX_PATH,
-                                    "Path to resource node file (CRES; optional, but recommended)")
-    Draw.PushButton("Select file", 0x21, 320, pos_y, 100, 20, "Open file browser")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    str_cres_filename = bpy.app.String("", 0x20, 20, pos_y, 300, 20, str_cres_filename.val, MAX_PATH,
+                                       "Path to resource node file (CRES; optional, but recommended)")
+    bpy.app.PushButton("Select file", 0x21, 320, pos_y, 100, 20, "Open file browser")
+    bpy.app.EndAlign()
 
     pos_y -= 35
 
     # options
 
-    Draw.BeginAlign()
-    btn_import_bmesh = Draw.Toggle("Bound. mesh", 0x31, 20, pos_y, 100, 20, btn_import_bmesh.val,
-                                   "Import bounding geometry")
-    btn_remove_doubles = Draw.Toggle("Rm. doubles", 0x32, 120, pos_y, 100, 20, btn_remove_doubles.val,
-                                     "If some vertices differ only in texture coordinates, then they are merged together (removes seams)")
-    btn_all_bones = Draw.Toggle("All bones", 0x33, 220, pos_y, 100, 20, btn_all_bones.val,
-                                "Import all bones/transforms; otherwise, used bones only")
-    btn_save_log = Draw.Toggle("Save log", 0x34, 320, pos_y, 100, 20, btn_save_log.val,
-                               "Write script's log data into file *.import_log.txt")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    btn_import_bmesh = bpy.app.Toggle("Bound. mesh", 0x31, 20, pos_y, 100, 20, btn_import_bmesh.val,
+                                      "Import bounding geometry")
+    btn_remove_doubles = bpy.app.Toggle("Rm. doubles", 0x32, 120, pos_y, 100, 20, btn_remove_doubles.val,
+                                        "If some vertices differ only in texture coordinates, then they are merged together (removes seams)")
+    btn_all_bones = bpy.app.Toggle("All bones", 0x33, 220, pos_y, 100, 20, btn_all_bones.val,
+                                   "Import all bones/transforms; otherwise, used bones only")
+    btn_save_log = bpy.app.Toggle("Save log", 0x34, 320, pos_y, 100, 20, btn_save_log.val,
+                                  "Write script's log data into file *.import_log.txt")
+    bpy.app.EndAlign()
 
     pos_y -= 45
 
     # buttons
 
-    Draw.BeginAlign()
-    Draw.PushButton("Import", 1, 120, pos_y, 100, 30, "Import geometry (Ctrl + Enter)")
-    Draw.PushButton("Exit", 0, 220, pos_y, 100, 30, "Terminate the script (Esc)")
-    Draw.EndAlign()
+    bpy.app.BeginAlign()
+    bpy.app.PushButton("Import", 1, 120, pos_y, 100, 30, "Import geometry (Ctrl + Enter)")
+    bpy.app.PushButton("Exit", 0, 220, pos_y, 100, 30, "Terminate the script (Esc)")
+    bpy.app.EndAlign()
 
 
 # ---------------------------------------
@@ -594,13 +592,13 @@ def set_cres_filename(filename):
 
 def event_handler(evt, val):
     global l_ctrl_key_pressed, r_ctrl_key_pressed
-    if evt == Draw.ESCKEY and val:
-        Draw.Exit()
-    elif evt == Draw.LEFTCTRLKEY:
+    if evt == bpy.app.ESCKEY and val:
+        bpy.app.Exit()
+    elif evt == bpy.app.LEFTCTRLKEY:
         l_ctrl_key_pressed = val
-    elif evt == Draw.RIGHTCTRLKEY:
+    elif evt == bpy.app.RIGHTCTRLKEY:
         r_ctrl_key_pressed = val
-    elif evt == Draw.RETKEY and val and (l_ctrl_key_pressed or r_ctrl_key_pressed):
+    elif evt == bpy.app.RETKEY and val and (l_ctrl_key_pressed or r_ctrl_key_pressed):
         begin_import()
         l_ctrl_key_pressed = 0
         r_ctrl_key_pressed = 0
@@ -608,23 +606,23 @@ def event_handler(evt, val):
 
 def button_events(evt):
     if evt == 0:
-        Draw.Exit()
+        bpy.app.Exit()
     elif evt == 1:
         begin_import()
     elif evt == 0x11:
-        Blender.Window.FileSelector(set_gmdc_filename, 'Select')
+        bpy.app.Window.FileSelector(set_gmdc_filename, 'Select')
     elif evt == 0x21:
-        Blender.Window.FileSelector(set_cres_filename, 'Select')
+        bpy.app.Window.FileSelector(set_cres_filename, 'Select')
 
 
 # -------------------------------------------------------------------------------
 # set default values for gui elements and run event loop
 
-str_gmdc_filename = Draw.Create("")
-str_cres_filename = Draw.Create("")
-btn_import_bmesh = Draw.Create(0)
-btn_remove_doubles = Draw.Create(1)
-btn_all_bones = Draw.Create(0)
-btn_save_log = Draw.Create(0)
+str_gmdc_filename = bpy.app.Create("")
+str_cres_filename = bpy.app.Create("")
+btn_import_bmesh = bpy.app.Create(0)
+btn_remove_doubles = bpy.app.Create(1)
+btn_all_bones = bpy.app.Create(0)
+btn_save_log = bpy.app.Create(0)
 
-Draw.Register(draw_gui, event_handler, button_events)
+bpy.app.Register(draw_gui, event_handler, button_events)
