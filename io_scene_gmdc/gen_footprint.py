@@ -28,12 +28,11 @@ Tooltip: 'Generate footprint for TS2 object' """
 # THE SOFTWARE.
 # -------------------------------------------------------------------------------
 
-import os
 from struct import pack
 from math import floor, ceil
 from itertools import product
-from gmdc_tools import log, error, set_log_file, close_log_file, print_last_exception, load_resource
-from gmdc_tools._resfile import DataListExtension, str_footprint
+from io_scene_gmdc.gmdc_tools import log, error, set_log_file, close_log_file, print_last_exception, load_resource
+from io_scene_gmdc.gmdc_tools._resfile import DataListExtension, str_footprint
 
 import bpy
 from mathutils import Vector

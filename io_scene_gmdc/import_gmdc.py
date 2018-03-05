@@ -28,7 +28,7 @@ Tooltip: 'Import TS2 GMDC file' """
 # THE SOFTWARE.
 # -------------------------------------------------------------------------------
 
-from gmdc_tools import *
+from io_scene_gmdc.gmdc_tools import *
 from itertools import chain, count
 
 import bpy

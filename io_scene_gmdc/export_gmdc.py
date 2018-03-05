@@ -30,7 +30,7 @@ Tooltip: 'Export to TS2 GMDC file' """
 
 import os
 from struct import pack
-from gmdc_tools import *
+from io_scene_gmdc.gmdc_tools import *
 from itertools import count, repeat
 
 import bpy
