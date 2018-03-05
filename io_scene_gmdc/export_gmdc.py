@@ -1,11 +1,3 @@
-#!BPY
-
-"""
-Name: 'GMDC (.gmdc)'
-Blender: 249
-Group: 'Export'
-Tooltip: 'Export to TS2 GMDC file' """
-
 # -------------------------------------------------------------------------------
 # Copyright (C) 2016  DjAlex88 (https://github.com/djalex88/)
 #
@@ -91,7 +83,7 @@ def prepare_geometry(settings):
     # process main geometry
     #
 
-    DATA_GROUPS = [];
+    DATA_GROUPS = []
     INDEX_GROUPS = []
 
     MORPH_NAMES = []  # [index] -> name

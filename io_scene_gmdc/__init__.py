@@ -22,8 +22,6 @@
 
 
 import bpy
-import os
-
 from bpy.props import (
     BoolProperty,
     FloatProperty,
@@ -91,13 +89,6 @@ class ImportGMDC(bpy.types.Operator, ImportHelper):
 
 class ExportGMDC(bpy.types.Operator, ExportHelper):
     """Save a Sims 2 GMDC File"""
-
-
-def menu_func_import(self, context):
-    self.layout.operator(ImportGMDC.bl_idname, text="Sims 2 GMDC (.gmdc)")
-
-
-def menu_func_export(self, context):
     bl_idname = "export_scene.gmdc"
     bl_label = "Export GMDC"
     bl_options = {'PRESET', 'UNDO'}
@@ -107,6 +98,14 @@ def menu_func_export(self, context):
         default="*.gmdc",
         options={'HIDDEN'},
     )
+
+
+def menu_func_import(self, context):
+    self.layout.operator(ImportGMDC.bl_idname, text="Sims 2 GMDC (.gmdc)")
+
+
+def menu_func_export(self, context):
+    self.layout.operator(ExportGMDC.bl_idname, text="Sims 2 GMDC (.gmdc)")
 
 
 classes = (

@@ -1,11 +1,3 @@
-#!BPY
-
-"""
-Name: 'GMDC (.gmdc, .5gd)'
-Blender: 249
-Group: 'Import'
-Tooltip: 'Import TS2 GMDC file' """
-
 # -------------------------------------------------------------------------------
 # Copyright (C) 2016  DjAlex88 (https://github.com/djalex88/)
 #
