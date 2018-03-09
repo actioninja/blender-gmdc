@@ -31,7 +31,7 @@ from mathutils import Vector as BlenderVector
 #  Importer
 ########################################
 
-def create_objects(geometry, transform_tree, settings):
+def create_objects(geometry, transform_tree, all_bones, import_bmesh):
     # ---------------------------------------
     # subroutines
 
@@ -248,7 +248,7 @@ def create_objects(geometry, transform_tree, settings):
     # add bounding geometry
     #
 
-    if settings['import_bmesh']:
+    if import_bmesh:
 
         if geometry.static_bmesh:
             log('Creating static bounding mesh...')
@@ -312,10 +312,6 @@ def create_objects(geometry, transform_tree, settings):
             w = tuple(scene.properties['gmdc_inverse_transforms'])
             log('Scene already has inverse transforms (%i) stored in scene.properties["gmdc_inverse_transforms"]' % (
                         len(w) / 7))
-            if v != w and display_menu('The file has a different set of inverse transforms. Replace?',
-                                       ['Yes, replace inverse transforms.',
-                                        'No, keep previously loaded inverse transforms.'], choice_required=True) == 0:
-                raise Exception()
         except:
             log('Saving inverse transforms in scene.properties["gmdc_inverse_transforms"]')
             scene.properties['gmdc_inverse_transforms'] = v
@@ -328,7 +324,7 @@ def create_objects(geometry, transform_tree, settings):
 
         bone_set = set(chain(*(group.bones or [] for group in geometry.index_groups)))
 
-        if settings['all_bones']:
+        if all_bones:
 
             node_ids = set(map(id, transform_tree))
 
@@ -377,70 +373,45 @@ def create_objects(geometry, transform_tree, settings):
 # <- end
 
 
-def begin_import():
-    settings = {
-        'import_bmesh': btn_import_bmesh.val,
-        'remove_doubles': btn_remove_doubles.val,
-        'all_bones': btn_all_bones.val,
-    }
-
-    _save_log = bool(btn_save_log.val)
-
-    gmdc_filename = str_gmdc_filename.val.strip()
-    cres_filename = str_cres_filename.val.strip()
-
-    if not gmdc_filename:
-        display_menu('Error!', ['Select GMDC file.'])
-        return
-
-    # create log file (if needed)
-    if _save_log:
-        s = gmdc_filename + '.import_log.txt'
-        log('Opening log file "%s" for writing... ' % s)
-        try:
-            f = open(s, 'w')
-        except IOError as e:
-            error(e)
-            display_menu('Error!', ['Could not open log file for writing.'])
-            return
-        # Ok
-        set_log_file(f)
+def load(context,
+         filepath,
+         *,
+         cres_path="",
+         import_bmesh=True,
+         remove_doubles=False,
+         import_all_bones=False):
 
     #
     # begin import
     #
 
     log('==Geometry Data Container Importer======')
-    log('GMDC file:', gmdc_filename)
-    log('CRES file:', cres_filename)
     log('Settings:')
-    log('--Import bounding geometry:', settings['import_bmesh'])
-    log('--Remove doubles:   ', settings['remove_doubles'])
-    log('--Import all bones: ', settings['all_bones'])
+    log('--Import bounding geometry:', import_bmesh)
+    log('--Remove doubles:   ', remove_doubles)
+    log('--Import all bones: ', import_all_bones)
     log()
 
     # load geometry
-    log('Opening GMDC file "%s"...' % gmdc_filename)
     try:
-        res = load_resource(gmdc_filename, _save_log and 2 or 1)
+        res = load_resource(filepath,  2 or 1)
     except:
         print_last_exception()
         res = False
     if not res or res.nodes[0].type != 'cGeometryDataContainer':
         res and error('Not a GMDC file!')
         close_log_file()
-        display_menu('Error!', ['Could not load geometry file. See log for details.'])
         return
     geometry = res.nodes[0].geometry
 
     log()
 
     transform_tree = None
-    if cres_filename:
+    if filepath:
         # load skeleton
-        log('Opening CRES file "%s"...' % cres_filename)
+        log('Opening CRES file "%s"...' % cres_path)
         try:
-            res = load_resource(cres_filename, _save_log and 2 or 1)
+            res = load_resource(cres_path, 2 or 1)
             if res and res.nodes[0].type == 'cResourceNode':
                 transform_tree = build_transform_tree(res.nodes)
             else:
@@ -449,36 +420,26 @@ def begin_import():
             print_last_exception()
         if not transform_tree:
             close_log_file()
-            display_menu('Error!', ['Could not load resource node file. See log for details.'])
             return
 
         log()
-        if _save_log:
-            log('==SKELETON==============================')
-            log(transform_tree)
-            log()
-
     try:
-        if settings['remove_doubles']:
+        if remove_doubles:
             log('Removing doubles...')
             geometry.remove_doubles()
             log()
 
         log('Creating objects...')
-        create_objects(geometry, transform_tree, settings)
+        create_objects(geometry, transform_tree, import_all_bones, import_bmesh)
 
     except:
         print_last_exception()
-        display_menu('Error!', ['An error has occured. See log for details.'])
 
     else:
         # Ok
         log('Finished!')
 
         bpy.app.Redraw()
-
-        # exit prompt
-        if display_menu("Import complete!", ['Quit']) == 0: bpy.app.Exit()
 
     finally:
         close_log_file()

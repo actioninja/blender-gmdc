@@ -36,13 +36,21 @@ from bpy_extras.io_utils import (
         axis_conversion,
         )
 
+if "bpy" in locals():
+    import importlib
+    if "import_gmdc" in locals():
+        importlib.reload(import_gmdc)
+    if "export_gmdc" in locals():
+        importlib.reload(export_gmdc)
+
+
 bl_info = {
     "name": "Sims 2 GMDC Tools",
     "author": "djalex88 (actioninja for blender 2.5+ port)",
     "version": (1, 0, 0),
     "blender": (2, 79),
     "category": "Import-Export",
-    "location": "File > Import/Export > Sims 2 GMDC (*.gmdc)",
+    "location": "File > Import/Export > Sims 2 GMDC (*.5gd)",
     "description": "Importer and Exporter for Sims 2 format GMDC files."
 }
 
@@ -53,9 +61,9 @@ class ImportGMDC(bpy.types.Operator, ImportHelper):
     bl_label = "Import GMDC"
     bl_options = {'PRESET', 'UNDO'}
 
-    filename_ext = ".gmdc"
+    filename_ext = ".5gd"
     filter_glob = StringProperty(
-        default="*.gmdc",
+        default="*.5gd",
         options={'HIDDEN'},
     )
 
@@ -76,7 +84,17 @@ class ImportGMDC(bpy.types.Operator, ImportHelper):
     )
 
     def execute(self, context):
-        from . import import_gmdc
+        from .io_scene_gmdc import import_gmdc
+
+        keywords = self.as_keywords(ignore=("axis_forward",
+                                            "axis_up",
+                                            "filter_glob",
+                                            "split_mode",
+                                            ))
+
+        if bpy.data.is_saved and context.user_preferences.filepaths.use_relative_paths:
+            import os
+            keywords["relpath"] = os.path.dirname(bpy.data.filepath)
 
     def draw(self, context):
         layout = self.layout
@@ -93,9 +111,9 @@ class ExportGMDC(bpy.types.Operator, ExportHelper):
     bl_label = "Export GMDC"
     bl_options = {'PRESET', 'UNDO'}
 
-    filename_ext = ".gmdc"
+    filename_ext = ".5gd"
     filter_glob = StringProperty(
-        default="*.gmdc",
+        default="*.5gd",
         options={'HIDDEN'},
     )
 
@@ -122,7 +140,7 @@ def register():
     bpy.types.INFO_MT_file_export.append(menu_func_export)
 
 
-def register():
+def unregister():
     bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.INFO_MT_file_export.remove(menu_func_export)
 
